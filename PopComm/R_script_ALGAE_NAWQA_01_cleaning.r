@@ -1,0 +1,166 @@
+####################################################################
+# -- Biodiveristy data munging template -- pop comm group -- Stream Resiliency RCN
+# -- -- updated 14 Nov 2018
+# -- -- Eric Sokol
+
+# What do:
+# -- read in data from google drive
+# -- standardize output for script to produce biodiveristy metrics at local and regional scales for a collection of sampling locations
+
+##########################################
+# -- data vetting checklist
+##########################################
+# see this document: https://docs.google.com/document/d/19btPMPND8VeH-txR0owM8SaHZMKbqBg2PVBVd0ET-lw/edit?usp=sharing
+
+
+##########################################
+# -- Required packages for this script
+##########################################
+rm(list = ls())
+gc()
+
+library(tidyverse)
+library(googledrive)
+
+
+##########################################
+# Arguments expected for finding file
+##########################################
+# -- my_path_to_googledirve_directory 
+# -- my_filename
+
+my_path_to_googledirve_directory <- 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/ALGAE/HUC01_02'
+my_filename <- '20181108.1021.AlgResults.csv'
+
+
+##########################################
+# -- read in data
+##########################################
+# using data in google drive in "Spatial Dynamics WG/Pop-comm group/New_Biodata_All/ALGAE/HUC01_02" filepath
+my_list_of_files <- googledrive::drive_ls(my_path_to_googledirve_directory)
+
+# xlsx_file_list <- my_list_of_files %>% filter(grepl('\\.xlsx', name))
+# need to re-save the file as a .csv, I can't read in xlsx via api
+csv_file_list <- my_list_of_files %>% filter(grepl(my_filename, name))
+
+google_id <- csv_file_list$id[1] #take the first if multiple, should only be one
+
+file_url <- paste0('https://drive.google.com/uc?export=download&id=',
+       google_id)
+
+dat_in <- read_csv(file_url)
+
+################################################################
+# -- 1. filter out sample types that should not be included
+##########################################
+
+dat_munging <- dat_in %>% filter(SampleTypeCode == 'AQMH') #select multihabitat sampling
+# phytoplankton code to filter out "APHY"
+
+dat_munging$SiteVisitSampleNumber %>% unique() %>% length()
+dat_munging$SiteNumber %>% unique() %>% length()
+
+dat_munging$TotAreaSampled_cm2 %>% unique()
+
+################################################################
+# -- 2. standardize by sampling effort
+##########################################
+
+# *pick only distes with multi-habitats -- done above -- selected AQMH site type codes
+
+################################################################
+# -- 3. aggregate and standardize repeated observations at the same location
+##########################################
+
+# *NEED to aggregate repeated measures -- see below
+
+
+################################################################
+# -- 4. standardize taxonomic resolution
+##########################################
+
+# take out everything that is higher tax res than species
+dat_munging$PublishedTaxonNameLevel %>% unique() #what are the taxon ranks
+
+# only keep species or variety
+dat_munging <- dat_munging %>% filter(tolower(PublishedTaxonNameLevel) %in% c('species','variety'))
+
+
+################################################################
+# -- 5. filter out rare taxa
+##########################################
+
+# make a table of taxon occurrence rates by observation variable "SitevisitSampleNumber"
+taxon_occurrence_rates <- dat_munging %>% select(SiteVisitSampleNumber, PublishedTaxonName, PublishedTaxonNameLevel) %>% mutate(occurrence = 1) %>%
+  distinct() %>%
+  group_by(PublishedTaxonName, PublishedTaxonNameLevel) %>%
+  summarize(total_occurrence_in_data_set = sum(occurrence))
+
+# make table of single and double occurrence rate taxa (the rare stuff)
+taxon_singletons <- taxon_occurrence_rates %>% filter(total_occurrence_in_data_set ==1)
+taxon_doubletons <- taxon_occurrence_rates %>% filter(total_occurrence_in_data_set ==2)
+
+taxon_rare_removed <- taxon_occurrence_rates %>% filter(total_occurrence_in_data_set > 2)
+
+# remove single occurrence taxa
+dat_munging <- dat_munging %>% filter(!PublishedTaxonName %in% taxon_singletons$PublishedTaxonName)
+
+################################################################
+# -- Write out data 
+##########################################
+
+# Arguments expected for data in next step in analysis
+# -- sample_id
+# -- collection_date (not required)
+# -- sampling_location_id
+# -- sampling_location_name
+# -- local_grouping_variable (only if different than sampling_location_id)
+# -- regional_grouping_variable (not required)
+# -- taxon_id
+# -- taxon_resolution (not required)
+
+
+# -- extracting relevant variables and re-naming them
+dat_munging_2 <- dat_munging %>% select(SiteVisitSampleNumber, CollectionDate, SiteNumber, SiteName, 
+                       PublishedTaxonName, PublishedTaxonNameLevel) %>%
+  distinct() %>%
+  rename(sample_id = SiteVisitSampleNumber,
+         collection_date = CollectionDate,
+         sampling_location_id = SiteNumber,
+         sampling_location_name = SiteName,
+         taxon_id = PublishedTaxonName,
+         taxon_resolution = PublishedTaxonNameLevel)
+
+dat_munging_sites <- dat_munging_2 %>% 
+  select(-taxon_id, -taxon_resolution) %>%
+  mutate(collection_date = as.character(collection_date)) %>% 
+  group_by(sampling_location_id, sampling_location_name) %>% 
+  summarize(n_dates = collection_date %>% unique() %>% length(),
+            n_samples = sample_id %>% unique() %>% length())
+
+dat_munging_taxa <- dat_munging_2 %>%
+  select(sampling_location_id, taxon_id, taxon_resolution)
+
+dat_munging_out <- dat_munging_sites %>% left_join(dat_munging_taxa)
+
+# -- write out data 
+# make a new output filename
+write_filename <- paste0(gsub('\\.csv','_CLEANED.csv',my_filename))
+# temp write local
+readr::write_csv(dat_munging_out, write_filename)
+
+# conditional depending on if we need to overwrite or create new
+if(!write_filename %in% my_list_of_files$name){
+  drive_upload(write_filename, 
+               path = my_path_to_googledirve_directory, 
+               name = write_filename, 
+               type = NULL,
+               verbose = TRUE)
+}else{
+  google_id <- my_list_of_files %>% filter(name == write_filename) %>% select(id) %>% unlist()
+  drive_update(file = as_id(google_id), 
+               media = write_filename)
+}
+
+#remove local file
+file.remove(write_filename)
