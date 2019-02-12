@@ -1,3 +1,11 @@
+# Loop for cleaning algae NAWQA Data on google drive in each HUC subdir
+
+####################################################################
+# -- Biodiversity (Algae) data cleaning script -- pop comm group -- Stream Resiliency RCN
+# -- -- updated 12 Feb 2019
+# -- -- Eric Sokol
+
+# clear out workspace
 rm(list = ls())
 gc()
 
