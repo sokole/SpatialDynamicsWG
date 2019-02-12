@@ -1,6 +1,6 @@
 ####################################################################
 # -- Biodiveristy data munging template -- pop comm group -- Stream Resiliency RCN
-# -- -- updated 14 Nov 2018
+# -- -- updated 16 Jan 2019
 # -- -- Eric Sokol
 
 # What do:
@@ -21,7 +21,7 @@ gc()
 
 library(tidyverse)
 library(googledrive)
-
+library(readxl)
 
 ##########################################
 # Arguments expected for finding file
@@ -30,25 +30,42 @@ library(googledrive)
 # -- my_filename
 
 my_path_to_googledirve_directory <- 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/ALGAE/HUC01_02'
-my_filename <- '20181108.1021.AlgResults.csv'
+# my_filename <- '20181108.1021.AlgResults.csv'
 
 
 ##########################################
 # -- read in data
 ##########################################
+
 # using data in google drive in "Spatial Dynamics WG/Pop-comm group/New_Biodata_All/ALGAE/HUC01_02" filepath
 my_list_of_files <- googledrive::drive_ls(my_path_to_googledirve_directory)
 
-# xlsx_file_list <- my_list_of_files %>% filter(grepl('\\.xlsx', name))
-# need to re-save the file as a .csv, I can't read in xlsx via api
-csv_file_list <- my_list_of_files %>% filter(grepl(my_filename, name))
+# ---------- for .xlsx files -----------------------------------------------
+# finds "Results.xlsx" files in the dirctory -- there should only be one, and this is the raw data from NAWQA
+xlsx_file_list <- my_list_of_files %>% filter(grepl('(?i)results\\.xlsx', name))
 
-google_id <- csv_file_list$id[1] #take the first if multiple, should only be one
+my_file_name_xlsx <- xlsx_file_list$name[1]
+my_file_name_no_ext <- gsub('\\.xlsx','',my_file_name_xlsx)
 
-file_url <- paste0('https://drive.google.com/uc?export=download&id=',
-       google_id)
+# assume there is only one file, but if not, take the first one
+google_id <- xlsx_file_list$id[1] #take the first if multiple, should only be one
 
-dat_in <- read_csv(file_url)
+##################################
+# download a file and stash it in local working dir
+downloaded_file <- googledrive::drive_download(as_id(google_id), overwrite = TRUE)
+
+# read in data -- should only be 1 sheet in xlsx file
+dat_in <- readxl::read_xlsx(downloaded_file$local_path, sheet = 1)
+
+# remove downloaded file
+file.remove(downloaded_file$local_path)
+##################################
+# # --------- for .csv files -----------------------------------------
+# csv_file_list <- my_list_of_files %>% filter(grepl(my_filename, name))
+# google_id <- csv_file_list$id[1] #take the first if multiple, should only be one
+# file_url <- paste0('https://drive.google.com/uc?export=download&id=',
+#        google_id)
+# dat_in <- read_csv(file_url)
 
 ################################################################
 # -- 1. filter out sample types that should not be included
@@ -145,7 +162,7 @@ dat_munging_out <- dat_munging_sites %>% left_join(dat_munging_taxa)
 
 # -- write out data 
 # make a new output filename
-write_filename <- paste0(gsub('\\.csv','_CLEANED.csv',my_filename))
+write_filename <- paste0(my_file_name_no_ext,'_CLEANED.csv')
 # temp write local
 readr::write_csv(dat_munging_out, write_filename)
 
