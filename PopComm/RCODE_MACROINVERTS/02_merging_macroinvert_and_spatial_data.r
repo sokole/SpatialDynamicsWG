@@ -18,7 +18,7 @@ library(googledrive)
 
 ####################
 # searching google drive for dirs from which to pull data
-my_path_to_googledirve_directory <- 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/INVERT'
+my_path_to_googledirve_directory <- 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/INVERTS'
 my_list_of_files <- googledrive::drive_ls(my_path_to_googledirve_directory)
 
 my_list_of_huc_dirs <- my_list_of_files %>% filter(grepl('HUC',name))
@@ -122,10 +122,10 @@ data_macroinvert_spatial %>%
 # 140 sites not flow connected?
 
 #####################################
-# -- write out data to 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/INVERT'
+# -- write out data to 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/INVERTS'
 
 # look at filenames in target directory
-my_path_to_googledirve_directory <- 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/INVERT'
+my_path_to_googledirve_directory <- 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/INVERTS'
 my_list_of_files <- googledrive::drive_ls(my_path_to_googledirve_directory)
 
 # make a new output filename
