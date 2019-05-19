@@ -1,6 +1,6 @@
 ####################################################################
-# -- Biodiversity (Algae) metrics -- pop comm group -- Stream Resiliency RCN
-# -- -- updated 12 Feb 2019
+# -- Biodiversity (Macroinverts) metrics -- pop comm group -- Stream Resiliency RCN
+# -- -- updated 19 May 2019
 # -- -- Eric Sokol
 
 # clear out workspace
@@ -20,11 +20,11 @@ source('https://raw.githubusercontent.com/sokole/SpatialDynamicsWG/master/PopCom
 
 ####################
 # path to read/write directory on google drive
-my_path_to_googledirve_directory <- 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/ALGAE'
+my_path_to_googledirve_directory <- 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/INVERTS'
 my_list_of_files <- googledrive::drive_ls(my_path_to_googledirve_directory)
 
 # read in cleaned biodata file
-read_filename <- paste0('NAQWA_algae_biodata_cleaned_with_spatial_groupings.csv')
+read_filename <- paste0('NAQWA_macroinvert_biodata_cleaned_with_spatial_groupings.csv')
 
 google_id <- my_list_of_files %>% filter(name == read_filename) %>% dplyr::select(id) %>% unlist()
 file_url <- paste0('https://drive.google.com/uc?export=download&id=',
@@ -66,8 +66,8 @@ results_all_continental_US <- results_all
 # write to googledrive
 write_to_google_drive(
   data_to_write = results_all_continental_US,
-  write_filename = 'NAQWA_algae_derived_biodiversity_metrics_by_continetnal_US.csv',
-  my_path_to_googledirve_directory = 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/ALGAE')
+  write_filename = 'NAQWA_macroinvert_derived_biodiversity_metrics_by_continetnal_US.csv',
+  my_path_to_googledirve_directory = 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/INVERTS')
 ##########################################################
 
 ###########################################################
@@ -124,8 +124,8 @@ results_by_huc_dir <- results_all
 # write to googledrive
 write_to_google_drive(
   data_to_write = results_by_huc_dir,
-  write_filename = 'NAQWA_algae_derived_biodiversity_metrics_by_huc_dir.csv',
-  my_path_to_googledirve_directory = 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/ALGAE')
+  write_filename = 'NAQWA_macroinvert_derived_biodiversity_metrics_by_huc_dir.csv',
+  my_path_to_googledirve_directory = 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/INVERTS')
 ##########################################################
 
 ###########################################################
@@ -182,6 +182,6 @@ results_by_root_SITE_ID <- results_all
 # write to googledrive
 write_to_google_drive(
   data_to_write = results_by_root_SITE_ID,
-  write_filename = 'NAQWA_algae_derived_biodiversity_metrics_by_root_SITE_ID.csv',
-  my_path_to_googledirve_directory = 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/ALGAE')
+  write_filename = 'NAQWA_macroinvert_derived_biodiversity_metrics_by_root_SITE_ID.csv',
+  my_path_to_googledirve_directory = 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/INVERTS')
 ##########################################################
