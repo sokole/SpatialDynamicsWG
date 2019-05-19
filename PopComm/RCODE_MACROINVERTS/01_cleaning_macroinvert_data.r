@@ -1,8 +1,8 @@
-# Loop for cleaning algae NAWQA Data on google drive in each HUC subdir
+# Loop for cleaning macroinvert NAWQA Data on google drive in each HUC subdir
 
 ####################################################################
-# -- Biodiversity (Algae) data cleaning script -- pop comm group -- Stream Resiliency RCN
-# -- -- updated 12 Feb 2019
+# -- Biodiversity (Macroinvert) data cleaning script -- pop comm group -- Stream Resiliency RCN
+# -- -- updated 19 May 2019
 # -- -- Eric Sokol
 
 # clear out workspace
