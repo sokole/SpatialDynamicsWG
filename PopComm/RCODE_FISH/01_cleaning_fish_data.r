@@ -16,7 +16,7 @@ library(readxl)
 
 ############## clean_data_algae_nawqa ####################
 # source function from github
-source('https://raw.githubusercontent.com/sokole/SpatialDynamicsWG/master/PopComm/FUNCTIONS/clean_data_algae_nawqa.r')
+source('https://raw.githubusercontent.com/sokole/SpatialDynamicsWG/master/PopComm/FUNCTIONS/clean_data_fish_nawqa.r')
 
 ####################
 # searching google drive for dirs from which to pull data

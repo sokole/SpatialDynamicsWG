@@ -1,8 +1,8 @@
-# Loop for loading and combining algae NAWQA Data from each HUC subdir in google drive
+# Loop for loading and combining fish NAWQA Data from each HUC subdir in google drive
 
 ####################################################################
-# -- Biodiversity (Algae) data combining script -- pop comm group -- Stream Resiliency RCN
-# -- -- updated 12 Feb 2019
+# -- Biodiversity (Fish) data combining script -- pop comm group -- Stream Resiliency RCN
+# -- -- updated 19 May 2019
 # -- -- Eric Sokol
 
 # clear out workspace
@@ -18,7 +18,7 @@ library(googledrive)
 
 ####################
 # searching google drive for dirs from which to pull data
-my_path_to_googledirve_directory <- 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/ALGAE'
+my_path_to_googledirve_directory <- 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/FISH'
 my_list_of_files <- googledrive::drive_ls(my_path_to_googledirve_directory)
 
 my_list_of_huc_dirs <- my_list_of_files %>% filter(grepl('HUC',name))
@@ -102,12 +102,12 @@ network_group_sites <- readr::read_csv(file_url,
 ####################
 # merge data
 
-data_algae_spatial <- huc_data_file %>% 
+data_fish_spatial <- huc_data_file %>% 
   left_join(network_group_sites,
             by = c('sampling_location_id_no_leading_0' = 'upstream_SITE_ID'))
 
 # how many flow connected sites in data set?
-data_algae_spatial %>%
+data_fish_spatial %>%
   filter(!is.na(vpu)) %>%
   summarize(
     sampling_location_id_flow_connected = length(unique(sampling_location_id)) )
@@ -115,23 +115,23 @@ data_algae_spatial %>%
 
 
 # how many sites not flow connected?
-data_algae_spatial %>%
+data_fish_spatial %>%
   filter(is.na(vpu)) %>%
   summarize(
     sampling_location_id_flow_connected = length(unique(sampling_location_id)) )
 # 140 sites not flow connected?
 
 #####################################
-# -- write out data to 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/ALGAE'
+# -- write out data to 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/FISH  '
 
 # look at filenames in target directory
-my_path_to_googledirve_directory <- 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/ALGAE'
+my_path_to_googledirve_directory <- 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/FISH'
 my_list_of_files <- googledrive::drive_ls(my_path_to_googledirve_directory)
 
 # make a new output filename
-write_filename <- paste0('NAQWA_algae_biodata_cleaned_with_spatial_groupings.csv')
+write_filename <- paste0('NAQWA_fish_biodata_cleaned_with_spatial_groupings.csv')
 # temp write local
-readr::write_csv(data_algae_spatial, write_filename)
+readr::write_csv(data_fish_spatial, write_filename)
 
 # conditional depending on if we need to overwrite or create new
 if(!write_filename %in% my_list_of_files$name){
