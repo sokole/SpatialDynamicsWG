@@ -14,13 +14,13 @@ library(tidyverse)
 library(googledrive)
 library(readxl)
 
-############## clean_data_algae_nawqa ####################
+############## clean_data_macroinvert_nawqa ####################
 # source function from github
-source('https://raw.githubusercontent.com/sokole/SpatialDynamicsWG/master/PopComm/FUNCTIONS/clean_data_algae_nawqa.r')
+source('https://raw.githubusercontent.com/sokole/SpatialDynamicsWG/master/PopComm/FUNCTIONS/clean_data_macroinvert_nawqa.r')
 
 ####################
 # searching google drive for dirs from which to pull data
-my_path_to_googledirve_directory <- 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/ALGAE'
+my_path_to_googledirve_directory <- 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/INVERTS'
 my_list_of_files <- googledrive::drive_ls(my_path_to_googledirve_directory)
 
 my_list_of_huc_dirs <- my_list_of_files %>% filter(grepl('HUC',name))
@@ -47,7 +47,7 @@ for(i_huc in 1:nrow(my_list_of_huc_dirs)){
   
   # function to clean data
   try({
-    clean_data_algae_nawqa(
+    clean_data_macroinvert_nawqa(
       my_path_to_googledirve_directory = i_huc_dir_path,
       keep_local_output = FALSE)
   })

@@ -1,4 +1,4 @@
-# Function for cleaning fish NAWQA Data on google drive
+# Function for cleaning macroinvert NAWQA Data on google drive
 
 ####################################################################
 # -- Biodiveristy data munging template -- pop comm group -- Stream Resiliency RCN
@@ -14,8 +14,8 @@
 ##########################################
 # see this document: https://docs.google.com/document/d/19btPMPND8VeH-txR0owM8SaHZMKbqBg2PVBVd0ET-lw/edit?usp=sharing
 
-clean_data_fish_nawqa <- function(
-  my_path_to_googledirve_directory = NULL, # e.g. 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/FISH/HUC01_02'
+clean_data_macroinvert_nawqa <- function(
+  my_path_to_googledirve_directory = NULL, # e.g. 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/INVERT/HUC01_02'
   keep_local_output = FALSE
 ){
   ##########################################
@@ -83,14 +83,16 @@ clean_data_fish_nawqa <- function(
   # -- 1. filter out sample types that should not be included
   ##########################################
   
-  dat_munging <- dat_in %>% filter(SampleTypeCode == 'FISH') #select NAWQA fish data only
-  # Column: SampleTypeCode
-  # Description: Code indicating the type of sample collected
-  # Domain:
-  #   * FISH - NAWQA Fish
-  #   * FGEN - User-specified Fish
-  #   * FISH-W - NRSA Fish, wadable
-  #   * FISH-B - NRSA Fish, boatable (Large wadable or Boatable/Raftable)
+  dat_munging <- dat_in %>% filter(SampleTypeCode == 'IQMH') 
+  # Currently, only use samples with SampleTypeCode == 'IQMH' #select multi-habitat sampling
+  # Code options are:
+  #   IRTH - NAWQA Invertebrate Targeted Habitat
+  # IQMH - NAWQA Invertebrate Multiple Habitat
+  # IGEN - User-specified Invertebrate
+  # BERW - NRSA Invertebrate, wadable, reach-wide benthos
+  # ILGB-W - NRSA Invertebrate, wadable, low-gradient benthos
+  # BETB - NRSA Invertebrate, boatable, transect benthos
+  
   
   dat_munging$SiteVisitSampleNumber %>% unique() %>% length()
   dat_munging$SiteNumber %>% unique() %>% length()
@@ -114,19 +116,19 @@ clean_data_fish_nawqa <- function(
   # -- 4. standardize taxonomic resolution
   ##########################################
   
-  # take out everything that is higher tax res than species
-  dat_munging$PublishedTaxonNameLevel %>% unique() #what are the taxon ranks
-  
-  # only keep species or variety
-  dat_munging <- dat_munging %>% filter(tolower(PublishedTaxonNameLevel) %in% c('species','variety'))
-  
-  
+  dat_munging <- dat_munging %>% 
+    filter(!is.na(Genus)) %>%   # take out everything that is not identified to at least Genus level
+    mutate(PublishedTaxonName = Genus,
+           PublishedTaxonNameLevel = 'genus') # use Genus level ID 
+
   ################################################################
   # -- 5. filter out rare taxa
   ##########################################
   
   # make a table of taxon occurrence rates by observation variable "SitevisitSampleNumber"
-  taxon_occurrence_rates <- dat_munging %>% select(SiteVisitSampleNumber, PublishedTaxonName, PublishedTaxonNameLevel) %>% mutate(occurrence = 1) %>%
+  taxon_occurrence_rates <- dat_munging %>% select(SiteVisitSampleNumber, 
+                                                   PublishedTaxonName,
+                                                   PublishedTaxonNameLevel) %>% mutate(occurrence = 1) %>%
     distinct() %>%
     group_by(PublishedTaxonName, PublishedTaxonNameLevel) %>%
     summarize(total_occurrence_in_data_set = sum(occurrence))
@@ -137,7 +139,7 @@ clean_data_fish_nawqa <- function(
   
   # taxon_rare_removed <- taxon_occurrence_rates %>% filter(total_occurrence_in_data_set > 2)
   
-  # **not removing singletons or doubletons for fish at the moment**
+  # **not removing singletons or doubletons for macroinvert at the moment**
   # remove single occurrence taxa
   # dat_munging <- dat_munging %>% filter(!PublishedTaxonName %in% taxon_singletons$PublishedTaxonName)
   
