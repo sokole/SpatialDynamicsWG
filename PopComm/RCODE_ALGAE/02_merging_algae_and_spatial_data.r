@@ -17,9 +17,14 @@ library(googledrive)
 # library(readxl)
 
 ####################
+
 # searching google drive for dirs from which to pull data
-my_path_to_googledirve_directory <- 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/ALGAE'
-my_list_of_files <- googledrive::drive_ls(my_path_to_googledirve_directory)
+my_drive_id <- '1oa5iScTypLY-ftsK-2hGDN02URV__cWu' #for ALGAE subdir on google drive
+# my_path_to_googledirve_directory <- 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/ALGAE' #this doesn't work at the moment
+
+my_list_of_files <- my_drive_id %>%
+  googledrive::as_id() %>% 
+  googledrive::drive_ls()
 
 my_list_of_huc_dirs <- my_list_of_files %>% filter(grepl('HUC',name))
 
@@ -30,11 +35,13 @@ huc_data_file <- data.frame()
 # loop to clean data
 for(i_huc in 1:nrow(my_list_of_huc_dirs)){
   
-  i_huc_dir_path <- paste0(my_path_to_googledirve_directory, '/', my_list_of_huc_dirs$name[i_huc])
+  # get dir path for i_huc
+  # i_huc_dir_path <- paste0(my_path_to_googledirve_directory, '/', my_list_of_huc_dirs$name[i_huc])
+  i_huc_googleid <- my_list_of_huc_dirs$id[i_huc] %>% googledrive::as_id()
   
-  # check i_huc_dir_path for expected target file file
+  # check i_huc_dir_path for expected xlsx file
   i_huc_list_of_files <- data.frame() #initialize as data.frame with 0 rows
-  i_huc_list_of_files <- googledrive::drive_ls(i_huc_dir_path)
+  i_huc_list_of_files <- googledrive::drive_ls(i_huc_googleid)
   
   target_file <- data.frame() #initialize as data.frame with 0 rows
   target_file <- i_huc_list_of_files %>% filter(grepl('(?i)results_cleaned\\.csv', name))
@@ -64,7 +71,8 @@ for(i_huc in 1:nrow(my_list_of_huc_dirs)){
       huc_data_file,
       i_huc_data_file)
     
-    message(paste0('SUCCESS -- data loaded for ', target_file$name, ' from ', i_huc_dir_path))
+    # message(paste0('SUCCESS -- data loaded for ', target_file$name, ' from ', i_huc_dir_path))
+    message(paste0('SUCCESS -- data loaded for ', target_file$name, ' from ', my_list_of_huc_dirs$name[i_huc]))
   }
 
 } #END LOOP
@@ -72,7 +80,6 @@ for(i_huc in 1:nrow(my_list_of_huc_dirs)){
 # convert numeric cols back to numeric
 huc_data_file <- huc_data_file %>%
   mutate(
-    n_dates = as.numeric(n_dates),
     n_samples = as.numeric(n_samples),
     sampling_location_id_no_leading_0 = sampling_location_id %>% as.numeric %>% as.character())
 
@@ -87,8 +94,9 @@ huc_data_file$X_sampling_location_id_no_leading_0 <- paste0('X',huc_data_file$sa
 # sites that are "flow connected"
 #  file is called "Network_GroupSites_1162019.csv
 
-my_path_to_googledirve_directory <- 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018'
-my_list_of_files <- googledrive::drive_ls(my_path_to_googledirve_directory)
+# my_path_to_googledirve_directory <- 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018'
+my_googledrive_dir_id <- '1ZmCO7YYCTWNsGS0PPDIBPusCiVjLTBHu' %>% googledrive::as_id()
+my_list_of_files <- googledrive::drive_ls(my_googledrive_dir_id)
 
 # target_file_name <- 'Network_GroupSites_1162019.csv'
 target_file_name <- 'Network_GroupSites_3202019.csv' #new version of file with singletons and X preceeding id's
@@ -139,7 +147,9 @@ data_algae_spatial %>%
 
 # look at filenames in target directory
 my_path_to_googledirve_directory <- 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/ALGAE'
-my_list_of_files <- googledrive::drive_ls(my_path_to_googledirve_directory)
+my_drive_id <- '1oa5iScTypLY-ftsK-2hGDN02URV__cWu' %>% googledrive::as_id()
+#for ALGAE subdir on google drive
+my_list_of_files <- googledrive::drive_ls(my_drive_id)
 
 # make a new output filename
 write_filename <- paste0('NAQWA_algae_biodata_cleaned_with_spatial_groupings.csv')
