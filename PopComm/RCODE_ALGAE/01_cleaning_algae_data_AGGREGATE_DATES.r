@@ -54,7 +54,7 @@ for(i_huc in 1:nrow(my_list_of_huc_dirs)){
   # function to clean data
   try({
     clean_data_algae_nawqa(
-      my_path_to_googledirve_directory = i_huc_dir_path,
+      my_google_drive_directory_id = i_huc_googleid,
       keep_local_output = FALSE)
   })
 }

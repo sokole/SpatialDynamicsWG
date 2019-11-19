@@ -21,7 +21,7 @@ source('https://raw.githubusercontent.com/sokole/SpatialDynamicsWG/master/PopCom
 ####################
 # path to read/write directory on google drive
 my_drive_id <- '1oa5iScTypLY-ftsK-2hGDN02URV__cWu' %>% googledrive::as_id()#for ALGAE subdir on google drive
-my_path_to_googledirve_directory <- 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/ALGAE'
+# my_path_to_googledirve_directory <- 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/ALGAE'
 my_list_of_files <- googledrive::drive_ls(my_drive_id)
 
 # read in cleaned biodata file

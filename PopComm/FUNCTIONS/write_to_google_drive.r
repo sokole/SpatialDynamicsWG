@@ -1,6 +1,6 @@
 write_to_google_drive <- function(
   data_to_write = results_all_continental_US,
-  write_filename = 'NAQWA_algae_derived_biodiversity_metrics_by_continetnal_US.csv',
+  write_filename = NULL, #can be path or googleid, e.g., for path 'NAQWA_algae_derived_biodiversity_metrics_by_continetnal_US.csv'
   # look at filenames in target directory
   my_path_to_googledirve_directory = 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/ALGAE'){
   library(tidyverse)
