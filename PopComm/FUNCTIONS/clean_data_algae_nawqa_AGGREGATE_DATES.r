@@ -16,6 +16,7 @@
 
 clean_data_algae_nawqa <- function(
   my_path_to_googledirve_directory = NULL, # e.g. 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/ALGAE/HUC01_02'
+  my_google_drive_directory_id = NULL, 
   keep_local_output = FALSE
 ){
   ##########################################
@@ -28,8 +29,8 @@ clean_data_algae_nawqa <- function(
   library(googledrive)
   library(readxl)
   
-  if(is.null(my_path_to_googledirve_directory)){
-    stop('please provide path for my_path_to_googledirve_directory')
+  if(is.null(my_path_to_googledirve_directory) & is.null(my_google_drive_directory_id)){
+    stop('please provide path for my_path_to_googledirve_directory OR my_google_drive_directory_id')
   }
   
   ##########################################
@@ -47,7 +48,11 @@ clean_data_algae_nawqa <- function(
   ##########################################
   
   # using data in google drive in "Spatial Dynamics WG/Pop-comm group/New_Biodata_All/ALGAE/HUC01_02" filepath
-  my_list_of_files <- googledrive::drive_ls(my_path_to_googledirve_directory)
+  if(!is.null(my_path_to_googledirve_directory)){
+    my_list_of_files <- googledrive::drive_ls(my_path_to_googledirve_directory)
+  }else if(!is.null(my_google_drive_directory_id)){
+    my_list_of_files <- googledrive::drive_ls(my_google_drive_directory_id)
+  }
   
   # ---------- for .xlsx files -----------------------------------------------
   # finds "Results.xlsx" files in the dirctory -- there should only be one, and this is the raw data from NAWQA
