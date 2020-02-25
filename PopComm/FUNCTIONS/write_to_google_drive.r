@@ -2,7 +2,8 @@ write_to_google_drive <- function(
   data_to_write = results_all_continental_US,
   write_filename = NULL, #can be path or googleid, e.g., for path 'NAQWA_algae_derived_biodiversity_metrics_by_continetnal_US.csv'
   # look at filenames in target directory
-  my_path_to_googledirve_directory = 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/ALGAE'){
+  my_path_to_googledirve_directory = 'Spatial Dynamics WG/Pop-comm group/NAQWA_Biodata_All_NEW_November2018/ALGAE',
+  keep_local_copy_of_file = TRUE){
   library(tidyverse)
   library(googledrive)
   
@@ -29,6 +30,6 @@ write_to_google_drive <- function(
   }
   
   #remove local file
-  file.remove(write_filename)
+  if(!keep_local_copy_of_file) file.remove(write_filename)
   
 }
