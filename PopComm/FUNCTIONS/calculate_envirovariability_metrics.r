@@ -23,6 +23,15 @@ local_contribution_to_env_variability <- function(
                         names(env_dat) %>% setdiff(env_vars))
   }
   
+  # remove columns / env_vars with no variability
+  for(i in env_vars){
+    try({
+      i_var <- var(env_dat[,i])
+      if(i_var == 0){
+      env_vars <- env_vars %>% setdiff(i)
+      }
+    })
+  }
   # browser()
   
   env_dat <- env_dat %>% tibble::rownames_to_column()
