@@ -20,7 +20,24 @@ source('https://raw.githubusercontent.com/sokole/SpatialDynamicsWG/master/PopCom
 
 ####################
 # searching google drive for dirs from which to pull data
-my_drive_id <- '1WaSQJL21To63xN8R6AsE9EuHL2i3XrUl' #google drive id for fish dir
+
+####################
+# google drive ids
+
+pop_comm_drive_id <- '1ZmCO7YYCTWNsGS0PPDIBPusCiVjLTBHu' %>% googledrive::as_id()
+taxon_group <- 'FISH'
+
+
+###################
+# get fish drive id
+
+pop_comm_list_of_files <- googledrive::drive_ls(pop_comm_drive_id)
+
+my_drive_id <- pop_comm_list_of_files %>% filter(name == taxon_group) %>%
+  select(id) %>% unlist(use.names = FALSE) %>%
+  googledrive::as_id()
+
+# my_drive_id <- '1WaSQJL21To63xN8R6AsE9EuHL2i3XrUl' #google drive id for fish dir
 
 my_list_of_files <- my_drive_id %>%
   googledrive::as_id() %>% 
@@ -86,7 +103,7 @@ for(i_huc in 1:nrow(my_list_of_huc_dirs)){
 
 # -- write out raw data file
 # make a new output filename
-write_filename <- 'RAW_DATA_ALL_HUCS_FISH.csv'
+write_filename <- paste0('RAW_DATA_ALL_HUCS_',taxon_group,'.csv')
 # temp write local
 readr::write_csv(dat_all, write_filename)
 
@@ -96,4 +113,5 @@ readr::write_csv(dat_all, write_filename)
 write_to_google_drive(
   data_to_write = dat_all,
   write_filename = write_filename,
-  my_path_to_googledirve_directory = googledrive::as_id(my_drive_id))
+  my_path_to_googledirve_directory = googledrive::as_id(my_drive_id),
+  keep_local_copy_of_file = FALSE)
