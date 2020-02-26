@@ -29,6 +29,7 @@ local_contribution_to_env_variability <- function(
       i_var <- var(env_dat[,i])
       if(i_var == 0){
       env_vars <- env_vars %>% setdiff(i)
+      site_info_vars <- c(site_info_vars, i)
       }
     })
   }
