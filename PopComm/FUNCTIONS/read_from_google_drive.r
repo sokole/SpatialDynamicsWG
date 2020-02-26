@@ -19,7 +19,7 @@ read_from_google_drive <- function(
   matching_files <- my_list_of_files %>% filter(grepl(file_name_string,name))
   
   if(nrow(matching_files)!=1){
-    stop('found ', nrow(matching_files))
+    stop('found ', nrow(matching_files), ' matching files')
   }
   
   my_google_id <- matching_files %>% 
