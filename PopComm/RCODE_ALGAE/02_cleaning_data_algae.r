@@ -25,11 +25,11 @@ source('https://raw.githubusercontent.com/sokole/SpatialDynamicsWG/master/PopCom
 # google drive ids
 
 pop_comm_drive_id <- '1ZmCO7YYCTWNsGS0PPDIBPusCiVjLTBHu' %>% googledrive::as_id()
-taxon_group <- 'FISH'
+taxon_group <- 'ALGAE'
 
 
 ###################
-# get fish drive id
+# get ALGAE drive id
 
 pop_comm_list_of_files <- googledrive::drive_ls(pop_comm_drive_id)
 
@@ -37,7 +37,7 @@ my_drive_id <- pop_comm_list_of_files %>% filter(name == taxon_group) %>%
   select(id) %>% unlist(use.names = FALSE) %>%
   googledrive::as_id()
 
-# my_drive_id <- '1WaSQJL21To63xN8R6AsE9EuHL2i3XrUl' #google drive id for fish dir
+# my_drive_id <- '1WaSQJL21To63xN8R6AsE9EuHL2i3XrUl' #google drive id for ALGAE dir
 
 ####################
 # download most recent and reading in the raw data file
@@ -45,7 +45,7 @@ my_drive_id <- pop_comm_list_of_files %>% filter(name == taxon_group) %>%
 dat_all <- read_from_google_drive(file_name_string = '(?i)RAW_DATA',
                                   my_path_to_googledirve_directory = my_drive_id %>%
                                     googledrive::as_id(),
-                                  keep_local_copy_of_file = FALSE)
+                                  keep_local_copy_of_file = TRUE)
 
 
 ################################################################
@@ -54,14 +54,14 @@ dat_all <- read_from_google_drive(file_name_string = '(?i)RAW_DATA',
 
 dat_all$SampleTypeCode %>% unique()
 
-#select NAWQA fish data only
-# Column: SampleTypeCode
-# Description: Code indicating the type of sample collected
-# Domain:
-#   * FISH - NAWQA Fish
-#   * FGEN - User-specified Fish
-#   * FISH-W - NRSA Fish, wadable
-#   * FISH-B - NRSA Fish, boatable (Large wadable or Boatable/Raftable)
+# Currently, only use samples with SampleTypeCode == 'AQMH' #select multi-habitat sampling
+# Code options are:
+#   "AQMH" -- NAWQA Periphyton Multiple Habitat
+# "ARTH" -- NAWQA Periphyton Richest Targeted Habitat
+# "ADTH" -- NAWQA Periphyton Depositional Targeted Habitat
+# "APHY" -- NAWQA Phytoplankton
+
+
 
 dat_all$SiteVisitSampleNumber %>% unique() %>% length()
 # 753 site visit sample numbers

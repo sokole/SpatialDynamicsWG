@@ -1,8 +1,8 @@
 # Loop for cleaning algae NAWQA Data on google drive in each HUC subdir
 
 ####################################################################
-# -- Biodiversity (FISH) data cleaning script -- pop comm group -- Stream Resiliency RCN
-# -- -- updated 25 Feb 2020
+# -- Biodiversity (Algae) data cleaning script -- pop comm group -- Stream Resiliency RCN
+# -- -- updated 26 Feb 2020
 # -- -- Eric Sokol
 
 # clear out workspace
@@ -25,11 +25,11 @@ source('https://raw.githubusercontent.com/sokole/SpatialDynamicsWG/master/PopCom
 # google drive ids
 
 pop_comm_drive_id <- '1ZmCO7YYCTWNsGS0PPDIBPusCiVjLTBHu' %>% googledrive::as_id()
-taxon_group <- 'FISH'
+taxon_group <- 'ALGAE'
 
 
 ###################
-# get fish drive id
+# get Algae drive id
 
 pop_comm_list_of_files <- googledrive::drive_ls(pop_comm_drive_id)
 
@@ -37,7 +37,7 @@ my_drive_id <- pop_comm_list_of_files %>% filter(name == taxon_group) %>%
   select(id) %>% unlist(use.names = FALSE) %>%
   googledrive::as_id()
 
-# my_drive_id <- '1WaSQJL21To63xN8R6AsE9EuHL2i3XrUl' #google drive id for fish dir
+# my_drive_id <- '1WaSQJL21To63xN8R6AsE9EuHL2i3XrUl' #google drive id for Algae dir
 
 my_list_of_files <- my_drive_id %>%
   googledrive::as_id() %>% 
@@ -105,7 +105,7 @@ for(i_huc in 1:nrow(my_list_of_huc_dirs)){
 # make a new output filename
 write_filename <- paste0('RAW_DATA_ALL_HUCS_',taxon_group,'.csv')
 # temp write local
-readr::write_csv(dat_all, write_filename)
+# readr::write_csv(dat_all, write_filename)
 
 # to read the data back in
 # dat_all <- readr::read_csv(write_filename)
