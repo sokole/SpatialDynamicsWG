@@ -1,3 +1,7 @@
+env_dat = dat_lcev_in_vars_cont
+env_vars = env_var_list
+scale_data = TRUE
+
 # calculate LCEV (local contribution to environmental variability)
 
 local_contribution_to_env_variability <- function(
@@ -25,13 +29,14 @@ local_contribution_to_env_variability <- function(
   
   # remove columns / env_vars with no variability
   for(i in env_vars){
+    i_var <- NULL
     try({
-      i_var <- var(env_dat[,i])
-      if(i_var == 0){
+      i_var <- var(env_dat[,i]) %>% unlist(use.names = FALSE)
+      if(is.null(i_var) || i_var == 0){
       env_vars <- env_vars %>% setdiff(i)
       site_info_vars <- c(site_info_vars, i)
       }
-    })
+    }, silent = TRUE)
   }
   # browser()
   
