@@ -1,7 +1,3 @@
-env_dat = dat_lcev_in_vars_cont
-env_vars = env_var_list
-scale_data = TRUE
-
 # calculate LCEV (local contribution to environmental variability)
 
 local_contribution_to_env_variability <- function(
