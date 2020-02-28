@@ -82,15 +82,16 @@ dat_lith_raw <- read_from_google_drive(
     SITE_ID = 'c'))
 
 
-# # Get the bioclim raw data
+# Get the bioclim raw data
 
-# in_data_for_lccv <- read_from_google_drive(
-#   file_name_string = 'bioclim_PCA_',
-#   my_path_to_googledirve_directory = pop_comm_drive_id,
-#   keep_local_copy_of_file = FALSE,
-#   col_type = list(
-#     group.comid = 'c',
-#     SITE_ID = 'c'))
+in_data_for_lccv <- read_from_google_drive(
+  file_name_string = 'bioclim_PCA_',
+  my_path_to_googledirve_directory = pop_comm_drive_id,
+  keep_local_copy_of_file = FALSE,
+  col_type = list(
+    group.comid = 'c',
+    SITE_ID = 'c')) %>%
+  mutate(SITE_ID = SITE_ID %>% as.numeric() %>% as.character())
 
 
 
@@ -107,15 +108,35 @@ in_data_for_lcev <- dat_env_raw %>%
 # do all biodata sites have corresponding records in lcev raw data?
 dat_bio_cont$site_id %>% setdiff(in_data_for_lcev$SITE_ID)
 
+# check for missing sites in climate data
+dat_bio_cont$site_id %>% setdiff(in_data_for_lccv$SITE_ID)
+dat_bio_cont$site_id %>% intersect(in_data_for_lccv$SITE_ID)
+
+
 
 # filter to continental data set
 dat_lcev_in_vars_cont <- in_data_for_lcev %>%
-  filter(SITE_ID %in% dat_bio_cont$site_id)
+  filter(SITE_ID %in% dat_bio_cont$site_id) %>%
+  distinct()
+
+
+# filter to continental data set
+dat_lccv_in_vars_cont <- in_data_for_lccv %>%
+  filter(SITE_ID %in% dat_bio_cont$site_id) %>%
+  select(-c(taxa, vpu, group.comid, net.id, M, X, Y)) %>%
+  distinct()
 
 
 # write to taxon_group drive
 write_to_google_drive(data_to_write = dat_lcev_in_vars_cont,
                       write_filename = paste0('ENV_DATA_for_LCEV_',taxon_group,'.csv'),
+                      my_path_to_googledirve_directory = taxon_drive_id,
+                      keep_local_copy_of_file = FALSE)
+
+
+# write to taxon_group drive
+write_to_google_drive(data_to_write = dat_lccv_in_vars_cont,
+                      write_filename = paste0('CLIM_DATA_for_LCCV_',taxon_group,'.csv'),
                       my_path_to_googledirve_directory = taxon_drive_id,
                       keep_local_copy_of_file = FALSE)
 
@@ -191,5 +212,82 @@ for(i_group in group_list){
 # write to taxon_group drive
 write_to_google_drive(data_to_write = dat_LCEV_groups,
                       write_filename = paste0('LCEV_by_group_',taxon_group,'.csv'),
+                      my_path_to_googledirve_directory = taxon_drive_id,
+                      keep_local_copy_of_file = FALSE)
+
+
+#######################################################
+#######################################################
+# calculate the LCCV metric for continental data
+
+# remove SITE_ID from env_var_list
+clim_var_list <- names(dat_lccv_in_vars_cont) %>% setdiff('SITE_ID')
+
+# calc LCEV for cont
+result_LCCV_cont <- local_contribution_to_env_variability(
+  env_dat = dat_lccv_in_vars_cont,
+  env_vars = clim_var_list,
+  scale_data = TRUE,
+  method = 'euclidean')
+
+dat_LCCV_cont <- result_LCCV_cont$LCEV %>%
+  rename(LCCV = LCEV) %>%
+  mutate(LCCV_z_score = scale(LCCV)) %>%
+  select(-rowname)
+
+# write to taxon_group drive
+write_to_google_drive(data_to_write = dat_LCCV_cont,
+                      write_filename = paste0('LCCV_cont_',taxon_group,'.csv'),
+                      my_path_to_googledirve_directory = taxon_drive_id,
+                      keep_local_copy_of_file = FALSE)
+
+
+
+# calculate the LCCV metric for grouped data
+group_list <- dat_bio_group$region_id %>% 
+  as.character() %>% unique()
+
+
+dat_LCCV_groups <- data.frame()
+for(i_group in group_list){
+  dat_LCCV_i <- data.frame()
+  
+  try({
+    group_site_list <- dat_bio_group %>%
+      filter(region_id == i_group) %>%
+      select(site_id) %>%
+      unlist(use.names = FALSE) %>% unique()
+    
+    dat_lccv_in_vars_group_i <- dat_lccv_in_vars_cont %>%
+      filter(SITE_ID %in% group_site_list)
+    
+    result_LCCV_group_i <- local_contribution_to_env_variability(
+      env_dat = dat_lccv_in_vars_group_i,
+      env_vars = clim_var_list,
+      scale_data = TRUE,
+      method = 'euclidean')
+    
+    excluded_clim_vars_i <- result_LCCV_group_i$LCEV %>% 
+      names() %>%
+      intersect(clim_var_list)
+    
+    dat_LCCV_i <- result_LCCV_group_i$LCEV %>%
+      rename(LCCV = LCEV) %>%
+      select(SITE_ID, LCCV, SS_total, BD_total) %>%
+      mutate(LCCV_z_score = scale(LCCV)) %>%
+      mutate(excluded_vars = paste(excluded_clim_vars_i, collapse = ' | '))
+    
+    dat_LCCV_groups <- dat_LCCV_groups %>%
+      bind_rows(dat_LCCV_i)
+  })
+  
+  print(i_group)
+  
+}
+
+
+# write to taxon_group drive
+write_to_google_drive(data_to_write = dat_LCCV_groups,
+                      write_filename = paste0('LCCV_by_group_',taxon_group,'.csv'),
                       my_path_to_googledirve_directory = taxon_drive_id,
                       keep_local_copy_of_file = FALSE)
