@@ -46,14 +46,16 @@ dat_bio_cont <- read_from_google_drive(
   my_path_to_googledirve_directory = taxon_drive_id,
   keep_local_copy_of_file = FALSE,
   col_type = list(
-    site_id = 'c'))
+    site_id = 'c')) %>%
+  distinct()
 
 dat_bio_group <- read_from_google_drive(
   file_name_string = 'DERIVED_BIO_METRICS_by_root_COMID',
   my_path_to_googledirve_directory = taxon_drive_id,
   keep_local_copy_of_file = FALSE,
   col_type = list(
-    site_id = 'c'))
+    site_id = 'c')) %>%
+  distinct()
 
 ############################
 # get sample effort data
@@ -65,7 +67,8 @@ dat_sampling_effort <- read_from_google_drive(
   col_type = list(
     SiteNumber = 'c')) %>%
   rename(SITE_ID = SiteNumber) %>%
-  mutate(SITE_ID = SITE_ID %>% as.numeric() %>% as.character())
+  mutate(SITE_ID = SITE_ID %>% as.numeric() %>% as.character()) %>%
+  distinct()
 
 
 ############################
@@ -76,14 +79,16 @@ dat_LCEV_cont <- read_from_google_drive(
   my_path_to_googledirve_directory = taxon_drive_id,
   keep_local_copy_of_file = FALSE,
   col_type = list(
-    SITE_ID = 'c'))
+    SITE_ID = 'c')) %>%
+  distinct()
 
 dat_LCEV_group <- read_from_google_drive(
   file_name_string = 'LCEV_by_group_',
   my_path_to_googledirve_directory = taxon_drive_id,
   keep_local_copy_of_file = FALSE,
   col_type = list(
-    SITE_ID = 'c'))
+    SITE_ID = 'c')) %>%
+  distinct()
 
 
 ############################
@@ -100,17 +105,20 @@ dat_site_netowrk_geom <- read_from_google_drive(
   my_path_to_googledirve_directory = pop_comm_drive_id,
   keep_local_copy_of_file = FALSE,
   col_type = list(
-    SITE_ID = 'c')) 
+    SITE_ID = 'c')) %>%
+  distinct() 
 
 dat_site_netowrk_geom <- dat_site_netowrk_geom %>%
-  select(SITE_ID, head.h2o, AreaSQKM, sinuosity, SlopeNHDPlus)
+  select(SITE_ID, head.h2o, AreaSQKM, sinuosity, SlopeNHDPlus, vpu) %>%
+  distinct() 
 
 dat_site_dist_to_confl <- read_from_google_drive(
   file_name_string = 'Network_confluence_1142019',
   my_path_to_googledirve_directory = pop_comm_drive_id,
   keep_local_copy_of_file = FALSE,
   col_type = list(
-    SITE_ID = 'c'))
+    SITE_ID = 'c')) %>%
+  distinct()
 
 dat_site_dist_to_confl <- dat_site_dist_to_confl %>%
   select(SITE_ID, area_ratio, alpha, dist_km) %>%
@@ -120,34 +128,71 @@ dat_site_dist_to_confl <- dat_site_dist_to_confl %>%
 
 
 ############################
-# get among network feature variables -- parent dir
+# get among network feature variables 
 
+dat_network_vars <- read_from_google_drive(
+  file_name_string = '^among\\.network\\..*\\.csv$',
+  my_path_to_googledirve_directory = taxon_drive_id,
+  keep_local_copy_of_file = FALSE,
+  col_type = list(
+    group.comid = 'c'))
+
+dat_network_vars <- dat_network_vars %>% 
+  select(-c(X, net.id, vpu, M)) %>%
+  distinct()
 
 ############################
 # get spatial isolation data (distance to nearest neighbors)
 
-dat_distance_to_outlet <- read_from_google_drive(
+# overland distance
+dat_dist_near_neighbor_euc <- read_from_google_drive(
+  file_name_string = '^dist\\.euc\\.*\\.csv$',
+  my_path_to_googledirve_directory = taxon_drive_id,
+  keep_local_copy_of_file = FALSE,
+  col_type = list(
+    SITE_ID = 'c')) %>%
+  select(-c(FID,NEAR_FID,NEAR_DIST)) %>%
+  distinct()
+
+# water course distance
+dat_dist_water_course <- read_from_google_drive(
   file_name_string = '^distance\\..*\\.csv$',
   my_path_to_googledirve_directory = taxon_drive_id,
   keep_local_copy_of_file = FALSE,
   col_type = list(
-    SITE_ID = 'c'))
+    SITE_ID = 'c',
+    root_COMID = 'c')) %>%
+  distinct()
 
-dat_distance_to_outlet <- dat_distance_to_outlet %>%
-  select(SITE_ID, dist2outlet, unlist.w.) %>%
+dat_dist_water_course <- dat_dist_water_course %>%
+  select(SITE_ID, dist2outlet, unlist.w., root_COMID) %>%
   rename(watercourse_distance_to_nearest_neighbor = unlist.w.) %>%
   distinct()
+
 
 ################################
 ################################
 # merge all the data
 
+# join in the region_id with group.comid in the grouping vars file
+
 # merge cont data table
 dat_merged_cont <- dat_sampling_effort %>%
   right_join(dat_bio_cont, by = c('SITE_ID' = 'site_id')) %>%
   left_join(dat_LCEV_cont) %>%
-  left_join(dat_distance_to_outlet) %>%
-  left_join(dat_site_dist_to_confl)
+  left_join(dat_site_netowrk_geom) %>%
+  left_join(dat_site_dist_to_confl) %>%
+  left_join(dat_dist_near_neighbor_euc) %>%
+  left_join(dat_dist_water_course) %>%
+  
+  dat_merged_cont %>%
+  left_join(dat_network_vars, by = c( 'root_COMID' = 'group.comid'))
+
+# # checking matches
+# dat_merged_cont$root_COMID %>% intersect(dat_network_vars$group.comid)
+# dat_merged_cont$root_COMID %>% setdiff(dat_network_vars$group.comid)
+# dat_dist_water_course$root_COMID %>% intersect(dat_network_vars$group.comid)
+# dat_dist_water_course$root_COMID %>% setdiff(dat_network_vars$group.comid)
 
 # write to taxon_group drive
 write_to_google_drive(data_to_write = dat_merged_cont,
@@ -155,5 +200,21 @@ write_to_google_drive(data_to_write = dat_merged_cont,
                       my_path_to_googledirve_directory = write_data_id,
                       keep_local_copy_of_file = FALSE)
 
+# join in the region_id with group.comid in the grouping vars file
 
+# merge cont data table
+dat_merged_group <- dat_sampling_effort %>%
+  right_join(dat_bio_group, by = c('SITE_ID' = 'site_id')) %>%
+  left_join(dat_LCEV_group) %>%
+  left_join(dat_site_netowrk_geom) %>%
+  left_join(dat_site_dist_to_confl) %>%
+  left_join(dat_dist_near_neighbor_euc) %>%
+  left_join(dat_dist_water_course) %>%
+  left_join(dat_network_vars, by = c( 'root_COMID' = 'group.comid'))
+
+# write to taxon_group drive
+write_to_google_drive(data_to_write = dat_merged_group,
+                      write_filename = paste0('MERGED_DATA_BY_GROUP_',taxon_group,'.csv'),
+                      my_path_to_googledirve_directory = write_data_id,
+                      keep_local_copy_of_file = FALSE)
 
