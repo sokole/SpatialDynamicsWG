@@ -82,6 +82,18 @@ dat_lith_raw <- read_from_google_drive(
     SITE_ID = 'c'))
 
 
+# # Get the bioclim raw data
+
+# in_data_for_lccv <- read_from_google_drive(
+#   file_name_string = 'bioclim_PCA_',
+#   my_path_to_googledirve_directory = pop_comm_drive_id,
+#   keep_local_copy_of_file = FALSE,
+#   col_type = list(
+#     group.comid = 'c',
+#     SITE_ID = 'c'))
+
+
+
 in_data_for_lcev <- dat_env_raw %>%
   select(SITE_ID, PopDen2010Cat, ElevCat, OmCat) %>%
   left_join(

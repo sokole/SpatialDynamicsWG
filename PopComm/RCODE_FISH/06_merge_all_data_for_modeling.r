@@ -109,7 +109,8 @@ dat_site_netowrk_geom <- read_from_google_drive(
   distinct() 
 
 dat_site_netowrk_geom <- dat_site_netowrk_geom %>%
-  select(SITE_ID, head.h2o, AreaSQKM, sinuosity, SlopeNHDPlus, vpu) %>%
+  select(SITE_ID, head.h2o, AreaSQKM, sinuosity, SlopeNHDPlus, vpu,
+         snap_x, snap_y) %>%
   distinct() 
 
 dat_site_dist_to_confl <- read_from_google_drive(
@@ -184,8 +185,6 @@ dat_merged_cont <- dat_sampling_effort %>%
   left_join(dat_site_dist_to_confl) %>%
   left_join(dat_dist_near_neighbor_euc) %>%
   left_join(dat_dist_water_course) %>%
-  
-  dat_merged_cont %>%
   left_join(dat_network_vars, by = c( 'root_COMID' = 'group.comid'))
 
 # # checking matches

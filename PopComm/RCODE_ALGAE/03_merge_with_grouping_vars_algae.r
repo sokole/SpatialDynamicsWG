@@ -1,6 +1,6 @@
 ####################################################################
-# -- Biodiversity (FISH) data cleaning script -- pop comm group -- Stream Resiliency RCN
-# -- -- updated 26 Feb 2020
+# -- Biodiversity (ALGAE) data cleaning script -- pop comm group -- Stream Resiliency RCN
+# -- -- updated 28 Feb 2020
 # -- -- Eric Sokol
 
 # clear out workspace
@@ -22,11 +22,11 @@ source('https://raw.githubusercontent.com/sokole/SpatialDynamicsWG/master/PopCom
 # google drive ids
 
 pop_comm_drive_id <- '1ZmCO7YYCTWNsGS0PPDIBPusCiVjLTBHu' %>% googledrive::as_id()
-taxon_group <- 'FISH'
+taxon_group <- 'ALGAE'
 
 
 ###################
-# get fish drive id
+# get ALGAE drive id
 
 pop_comm_list_of_files <- googledrive::drive_ls(pop_comm_drive_id)
 

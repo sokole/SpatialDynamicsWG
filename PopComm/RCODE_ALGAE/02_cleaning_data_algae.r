@@ -45,7 +45,9 @@ my_drive_id <- pop_comm_list_of_files %>% filter(name == taxon_group) %>%
 dat_all <- read_from_google_drive(file_name_string = '(?i)RAW_DATA',
                                   my_path_to_googledirve_directory = my_drive_id %>%
                                     googledrive::as_id(),
-                                  keep_local_copy_of_file = TRUE)
+                                  keep_local_copy_of_file = TRUE,
+                                  col_type = list(
+                                    .default = 'c'))
 
 
 ################################################################
@@ -62,21 +64,33 @@ dat_all$SampleTypeCode %>% unique()
 # "APHY" -- NAWQA Phytoplankton
 
 
+dat_filtered_by_sample_type_code <- dat_all %>%
+  filter(SampleTypeCode == 'AQMH')
 
-dat_all$SiteVisitSampleNumber %>% unique() %>% length()
-# 753 site visit sample numbers
 
-dat_all$SiteNumber %>% unique() %>% length()
-# 385
+dat_filtered_by_sample_type_code$SiteVisitSampleNumber %>% unique() %>% length()
+# 455 site visit sample numbers
 
-dat_simple_tax <- dat_all %>%
+dat_filtered_by_sample_type_code$SiteNumber %>% unique() %>% length()
+# 277
+
+dat_simple_tax <-  dat_filtered_by_sample_type_code %>%
   select(SiteNumber, 
-         Genus, Species, Subspecies,
+         Genus, Species, Variety, Form,
          PublishedTaxonName, PublishedTaxonNameLevel,
          ScientificName,
-         ITIS_TSN, ITIS_MatchCode, huc_dir_name, huc_dir_googleid) %>%
+         AlgalGroup, 
+         BioDataTaxonName, BioDataShortName, 
+         huc_dir_name, huc_dir_googleid) %>%
   distinct()
 
+# filter to diatoms, drop everything that is genus or more coarse
+dat_simple_tax_filtered <- dat_simple_tax %>%
+  filter(AlgalGroup == 'Diatom') %>%
+  filter(PublishedTaxonNameLevel %in% c('Species','Variety','Form'))
+
+##################################################
+# - site details 
 
 site_detail_list <- dat_all %>%
   select(SIDNO, SiteNumber, SiteName, StudyReachName, SampleTypeCode) %>%
@@ -140,60 +154,50 @@ dat_tax_sampling_effort <- dat_simple_tax %>% left_join(sampling_effort)
 ##########################################
 
 
-# aggregate Cottus sp.
-library(taxize)
-my_tsn <- taxize::get_tsn('Cottus', get = 'genus')
-taxize::itis_getrecord(my_tsn)
-cottus_tsn <- my_tsn[1]
+# agg form to variety
+dat_working <- dat_simple_tax_filtered
 
-dat_working <- dat_tax_sampling_effort
 
-cottus_genus_record <- dat_working %>% filter(as.character(ITIS_TSN) == cottus_tsn) %>% slice(1)
+# which(dat_working$PublishedTaxonNameLevel == 'Form')
+#335, 464
+# 
+# i <- 335
+# 
+# dat_form <- dat_working %>% filter(PublishedTaxonNameLevel == 'Form')
 
-cottus_genus_record$Genus
-cottus_genus_record$PublishedTaxonName
-cottus_genus_record$PublishedTaxonNameLevel
-cottus_genus_record$ITIS_TSN
-cottus_genus_record$ScientificName
-
-esox_am_record <- dat_working %>% 
-  filter(grepl('(?i)esox americanus', PublishedTaxonName),
-         PublishedTaxonNameLevel == 'Species') %>%
-  slice(1)
 
 # loop to lump subspecies pike to northern pike
 # lump sculpin to genus
 for(i in 1:nrow(dat_working)){
   
-  # if genus is cottus
-  if(grepl('(?i)cottus',dat_working$PublishedTaxonName[i])){
-    dat_working[i,'CLEAN_ITIS_TSN'] <- cottus_genus_record$ITIS_TSN
-    dat_working[i, 'CLEAN_taxon_rank'] <- cottus_genus_record$PublishedTaxonNameLevel
-    dat_working[i, 'CLEAN_taxon_name'] <- cottus_genus_record$PublishedTaxonName
-  }else if(dat_working$PublishedTaxonNameLevel[i]=='Subspecies' && 
-           grepl('(?i)esox americanus', dat_working$PublishedTaxonName[i])){
-    dat_working[i,'CLEAN_ITIS_TSN'] <- esox_am_record$ITIS_TSN
-    dat_working[i, 'CLEAN_taxon_rank'] <- esox_am_record$PublishedTaxonNameLevel
-    dat_working[i, 'CLEAN_taxon_name'] <- esox_am_record$PublishedTaxonName
+  # if tax res is form, group to var or species
+  if(grepl('(?i)form',dat_working$PublishedTaxonNameLevel[i])){
+
+    # if a variety is available for the form
+    if(!is.na(dat_working$Variety[i])){
+
+      dat_working[i, 'CLEAN_taxon_name'] <- dat_working$Variety[i]
+      dat_working[i, 'CLEAN_taxon_rank'] <- 'Variety'
+      
+    }else{
+      
+      # if a species is available for the form
+      dat_working[i, 'CLEAN_taxon_rank'] <- 'Species'
+      dat_working[i, 'CLEAN_taxon_name'] <- dat_working$Species[i]
+      
+    }
   }else{
-    dat_working[i,'CLEAN_ITIS_TSN'] <- dat_working$ITIS_TSN[i]
     dat_working[i, 'CLEAN_taxon_rank'] <- dat_working$PublishedTaxonNameLevel[i]
     dat_working[i, 'CLEAN_taxon_name'] <- dat_working$PublishedTaxonName[i]
-  } 
-  
+    
+  }
+    
+
   print(paste0(i, ' out of ',nrow(dat_working)))
 }
 
 
 dat_working$CLEAN_taxon_rank %>% unique()
-
-# filter to include only taxon rank of species, or cottus lumped at the genus level
-dat_working <- dat_working %>%
-  filter(
-    CLEAN_taxon_rank == 'Species' |
-      CLEAN_taxon_name == 'Cottus') %>%
-  distinct()
-
 
 ################################################################
 # -- 5. filter out rare taxa
