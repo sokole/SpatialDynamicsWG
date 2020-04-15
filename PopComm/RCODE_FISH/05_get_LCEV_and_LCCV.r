@@ -1,3 +1,9 @@
+####################################################################
+# -- LCEV and LCCV (Fish) metrics -- pop comm group -- Stream Resiliency RCN
+# -- -- Eric Sokol
+# -- -- updated 14 April 2020 by D. Kopp
+
+
 ##############################
 # clean out workspace
 #########################
@@ -85,14 +91,13 @@ dat_lith_raw <- read_from_google_drive(
 # Get the bioclim raw data
 
 in_data_for_lccv <- read_from_google_drive(
-  file_name_string = 'bioclim_PCA_',
+  file_name_string = 'bioclim_all',#changed fileaname
   my_path_to_googledirve_directory = pop_comm_drive_id,
   keep_local_copy_of_file = FALSE,
   col_type = list(
     group.comid = 'c',
     SITE_ID = 'c')) %>%
   mutate(SITE_ID = SITE_ID %>% as.numeric() %>% as.character())
-
 
 
 in_data_for_lcev <- dat_env_raw %>%
@@ -110,8 +115,7 @@ dat_bio_cont$site_id %>% setdiff(in_data_for_lcev$SITE_ID)
 
 # check for missing sites in climate data
 dat_bio_cont$site_id %>% setdiff(in_data_for_lccv$SITE_ID)
-dat_bio_cont$site_id %>% intersect(in_data_for_lccv$SITE_ID)
-
+#dat_bio_cont$site_id %>% intersect(in_data_for_lccv$SITE_ID)
 
 
 # filter to continental data set
@@ -123,7 +127,7 @@ dat_lcev_in_vars_cont <- in_data_for_lcev %>%
 # filter to continental data set
 dat_lccv_in_vars_cont <- in_data_for_lccv %>%
   filter(SITE_ID %in% dat_bio_cont$site_id) %>%
-  select(-c(taxa, vpu, group.comid, net.id, M, X, Y)) %>%
+  select(-c(group.comid)) %>%
   distinct()
 
 
@@ -150,7 +154,7 @@ env_var_list <- names(dat_lcev_in_vars_cont) %>% setdiff('SITE_ID')
 
 # calc LCEV for cont
 result_LCEV_cont <- local_contribution_to_env_variability(
-  env_dat = dat_lcev_in_vars_cont,
+  env_dat = dat_lcev_in_vars_cont[complete.cases(dat_lcev_in_vars_cont), ], #why missing values?
   env_vars = env_var_list,
   scale_data = TRUE,
   method = 'euclidean')
