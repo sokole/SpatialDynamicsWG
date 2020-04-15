@@ -1,3 +1,9 @@
+####################################################################
+# -- Merging (Fish) Data Files -- pop comm group -- Stream Resiliency RCN
+# -- -- Eric Sokol
+# -- -- updated 14 April 2020 by D. Kopp
+
+##################################
 # clean out workspace
 rm(list = ls())
 gc()
@@ -47,7 +53,9 @@ dat_bio_cont <- read_from_google_drive(
   keep_local_copy_of_file = FALSE,
   col_type = list(
     site_id = 'c')) %>%
-  distinct()
+  distinct() %>%
+  select(c("site_id", "scale_of_region", "region_id", "n_sites", "local_richness", "LCBD", "LCBD_z_score"))
+
 
 dat_bio_group <- read_from_google_drive(
   file_name_string = 'DERIVED_BIO_METRICS_by_root_COMID',
@@ -55,7 +63,9 @@ dat_bio_group <- read_from_google_drive(
   keep_local_copy_of_file = FALSE,
   col_type = list(
     site_id = 'c')) %>%
-  distinct()
+  distinct() %>%
+  select(c("site_id", "scale_of_region", "region_id", "n_sites", "local_richness", "LCBD", "LCBD_z_score"))
+  
 
 ############################
 # get sample effort data
@@ -80,7 +90,8 @@ dat_LCEV_cont <- read_from_google_drive(
   keep_local_copy_of_file = FALSE,
   col_type = list(
     SITE_ID = 'c')) %>%
-  distinct()
+  distinct() %>%
+  select(c("SITE_ID", "LCEV", "LCEV_z_score"))
 
 dat_LCEV_group <- read_from_google_drive(
   file_name_string = 'LCEV_by_group_',
@@ -88,13 +99,35 @@ dat_LCEV_group <- read_from_google_drive(
   keep_local_copy_of_file = FALSE,
   col_type = list(
     SITE_ID = 'c')) %>%
-  distinct()
+  distinct() %>%
+  select(c("SITE_ID", "LCEV", "LCEV_z_score","excluded_vars"))
 
+names(dat_LCEV_group)[4] <- "LCEV_excluded_vars"
 
 ############################
 # get climate data
-# don't have this yet
 
+
+dat_LCCV_cont <- read_from_google_drive(
+  file_name_string = 'LCCV_cont_',
+  my_path_to_googledirve_directory = taxon_drive_id,
+  keep_local_copy_of_file = FALSE,
+  col_type = list(
+    SITE_ID = 'c')) %>%
+  distinct() %>%
+  select(c("SITE_ID", "LCCV", "LCCV_z_score"))
+
+
+dat_LCCV_group <- read_from_google_drive(
+  file_name_string = 'LCCV_by_group_',
+  my_path_to_googledirve_directory = taxon_drive_id,
+  keep_local_copy_of_file = FALSE,
+  col_type = list(
+    SITE_ID = 'c')) %>%
+  distinct()%>%
+  select(c("SITE_ID", "LCCV", "LCCV_z_score",  "excluded_vars"))
+
+names(dat_LCCV_group)[4] <- "LCCV_excluded_vars"
 
 ############################
 # get within network feature variables -- parent dir
@@ -109,7 +142,7 @@ dat_site_netowrk_geom <- read_from_google_drive(
   distinct() 
 
 dat_site_netowrk_geom <- dat_site_netowrk_geom %>%
-  select(SITE_ID, head.h2o, AreaSQKM, sinuosity, SlopeNHDPlus, vpu,
+  select(SITE_ID, sinuosity, SlopeNHDPlus, vpu,
          snap_x, snap_y) %>%
   distinct() 
 
@@ -181,11 +214,13 @@ dat_dist_water_course <- dat_dist_water_course %>%
 dat_merged_cont <- dat_sampling_effort %>%
   right_join(dat_bio_cont, by = c('SITE_ID' = 'site_id')) %>%
   left_join(dat_LCEV_cont) %>%
+  left_join(dat_LCCV_cont) %>%
   left_join(dat_site_netowrk_geom) %>%
   left_join(dat_site_dist_to_confl) %>%
   left_join(dat_dist_near_neighbor_euc) %>%
   left_join(dat_dist_water_course) %>%
   left_join(dat_network_vars, by = c( 'root_COMID' = 'group.comid'))
+
 
 # # checking matches
 # dat_merged_cont$root_COMID %>% intersect(dat_network_vars$group.comid)
@@ -205,6 +240,7 @@ write_to_google_drive(data_to_write = dat_merged_cont,
 dat_merged_group <- dat_sampling_effort %>%
   right_join(dat_bio_group, by = c('SITE_ID' = 'site_id')) %>%
   left_join(dat_LCEV_group) %>%
+  left_join(dat_LCCV_group) %>%
   left_join(dat_site_netowrk_geom) %>%
   left_join(dat_site_dist_to_confl) %>%
   left_join(dat_dist_near_neighbor_euc) %>%
@@ -216,4 +252,3 @@ write_to_google_drive(data_to_write = dat_merged_group,
                       write_filename = paste0('MERGED_DATA_BY_GROUP_',taxon_group,'.csv'),
                       my_path_to_googledirve_directory = write_data_id,
                       keep_local_copy_of_file = FALSE)
-
