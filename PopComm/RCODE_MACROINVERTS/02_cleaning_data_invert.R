@@ -1,6 +1,6 @@
 ####################################################################
 # -- Biodiversity Macroinvert data cleaning script -- pop comm group -- Stream Resiliency RCN
-# -- -- Eric Sokol
+# -- -- Eric Sokol and Darin 
 # -- -- updated 15 April 2020
 
 # clear out workspace
