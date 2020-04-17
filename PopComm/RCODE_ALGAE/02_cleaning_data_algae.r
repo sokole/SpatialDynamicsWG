@@ -1,7 +1,7 @@
 ####################################################################
-# -- Biodiversity (FISH) data cleaning script -- pop comm group -- Stream Resiliency RCN
-# -- -- updated 25 Feb 2020
-# -- -- Eric Sokol
+# -- Biodiversity (Algae) data cleaning script -- pop comm group -- Stream Resiliency RCN
+# -- -- updated 17 April 2020
+# -- -- Eric Sokol and Darin Kopp
 
 # clear out workspace
 rm(list = ls())
@@ -100,7 +100,7 @@ write_to_google_drive(
   data_to_write = site_detail_list,
   write_filename = paste0('site_detail_list_', taxon_group, '.csv'),
   my_path_to_googledirve_directory = my_drive_id %>%
-                        googledrive::as_id(),
+    googledrive::as_id(),
   keep_local_copy_of_file = FALSE)
 
 site_number_list <- dat_all %>%
@@ -123,7 +123,7 @@ sampling_effort <- dat_all %>%
     N_collect_dates = CollectionDate %>% unique() %>% length(),
     N_collect_years = CollectionYear %>% unique() %>% length()) %>%
   mutate(taxa_group = taxon_group)
-  
+
 write_to_google_drive(
   data_to_write = sampling_effort,
   write_filename = paste0('sampling_effort_',taxon_group,'.csv'),
@@ -172,10 +172,10 @@ for(i in 1:nrow(dat_working)){
   
   # if tax res is form, group to var or species
   if(grepl('(?i)form',dat_working$PublishedTaxonNameLevel[i])){
-
+    
     # if a variety is available for the form
     if(!is.na(dat_working$Variety[i])){
-
+      
       dat_working[i, 'CLEAN_taxon_name'] <- dat_working$Variety[i]
       dat_working[i, 'CLEAN_taxon_rank'] <- 'Variety'
       
@@ -191,8 +191,8 @@ for(i in 1:nrow(dat_working)){
     dat_working[i, 'CLEAN_taxon_name'] <- dat_working$PublishedTaxonName[i]
     
   }
-    
-
+  
+  
   print(paste0(i, ' out of ',nrow(dat_working)))
 }
 
@@ -203,7 +203,8 @@ dat_working$CLEAN_taxon_rank %>% unique()
 # -- 5. filter out rare taxa
 ##########################################
 
-dat_all <- dat_working
+dat_all <- dat_working %>%
+  left_join(sampling_effort)
 
 # make a table of taxon occurrence rates by observation variable "SitevisitSampleNumber"
 taxon_occurrence_rates <- dat_working %>% 
@@ -219,8 +220,8 @@ singleton_species_list <- taxon_occurrence_rates %>%
   filter(total_occurrence_in_data_set == 1)
 
 dat_no_singletons <- dat_working %>%
-  filter(!CLEAN_taxon_name %in% singleton_species_list$CLEAN_taxon_name)
-
+  filter(!CLEAN_taxon_name %in% singleton_species_list$CLEAN_taxon_name) %>%
+  left_join(sampling_effort)
 
 ################################################################
 # -- Write out data
@@ -250,6 +251,5 @@ write_to_google_drive(data_to_write = dat_no_singletons,
                       my_path_to_googledirve_directory = my_drive_id %>%
                         googledrive::as_id(),
                       keep_local_copy_of_file = FALSE)
-
 
 
