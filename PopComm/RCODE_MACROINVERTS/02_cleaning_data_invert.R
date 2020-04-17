@@ -48,24 +48,82 @@ dat_all <- read_from_google_drive(file_name_string = '(?i)RAW_DATA',
 
 ################################################################
 # -- 1. filter out sample types that should not be included
-# need to discuss with group about wich sampling sites to include
 ##########################################
 
 dat_all$SampleTypeCode %>% unique()
+
+#select NAWQA fish data only
+# Column: SampleTypeCode
+# Description: Code indicating the type of sample collected
+# Domain:
+# "IRTH" 
+# "IQMH" 
+# "BERW" 
+# "IGEN" 
+# "IDTH"
+
+dat_all$SiteVisitSampleNumber %>% unique() %>% length()
+# 2230 site visit sample numbers
+
+dat_all$SiteNumber %>% unique() %>% length()
+# 836
+
+dat_simple_tax <- dat_all %>%
+  select(SiteNumber, 
+         Genus, Species, Subspecies,
+         PublishedTaxonName, PublishedTaxonNameLevel,
+         ScientificName,
+         ITIS_TSN, ITIS_MatchCode, huc_dir_name, huc_dir_googleid) %>%
+  distinct()
+
+
+site_detail_list <- dat_all %>%
+  select(SIDNO, SiteNumber, SiteName, StudyReachName, SampleTypeCode) %>%
+  distinct()
+
+write_to_google_drive(
+  data_to_write = site_detail_list,
+  write_filename = paste0('site_detail_list_', taxon_group, '.csv'),
+  my_path_to_googledirve_directory = my_drive_id %>%
+    googledrive::as_id(),
+  keep_local_copy_of_file = FALSE)
+
+site_number_list <- dat_all %>%
+  select(SiteNumber) %>%
+  mutate(taxa_group = taxon_group) %>%
+  distinct()
+
+write_to_google_drive(
+  data_to_write = site_number_list,
+  write_filename = paste0('site_number_list_',taxon_group,'.csv'),
+  my_path_to_googledirve_directory = my_drive_id %>%
+    googledrive::as_id(),
+  keep_local_copy_of_file = FALSE)
+
+sampling_effort <- dat_all %>%
+  select(SiteNumber, SiteVisitSampleNumber, CollectionDate, CollectionYear) %>%
+  group_by(SiteNumber) %>% 
+  summarize(
+    N_samples = SiteVisitSampleNumber %>% unique() %>% length(),
+    N_collect_dates = CollectionDate %>% unique() %>% length(),
+    N_collect_years = CollectionYear %>% unique() %>% length()) %>%
+  mutate(taxa_group = taxon_group)
+
+write_to_google_drive(
+  data_to_write = sampling_effort,
+  write_filename = paste0('sampling_effort_',taxon_group,'.csv'),
+  my_path_to_googledirve_directory = my_drive_id %>%
+    googledrive::as_id(),
+  keep_local_copy_of_file = FALSE)
+
+# dat_munging$TotAreaSampled_cm2 %>% unique()
 
 ################################################################
 # -- 2. standardize by sampling effort
 ##########################################
 
-# sites were samepled multiple times; Unique SiteVisitSampleNumber + SiteNumber
-
-dat_all$SiteVisitSampleNumber %>% unique() %>% length()
-dat_all$SiteNumber %>% unique() %>% length()
-
-sites <- dat_all[,c("SiteNumber","SiteVisitSampleNumber")]%>% 
-  distinct()
-  
-aggregate(sites$SiteNumber, by = list(sites$SiteNumber), length)
+# Talk to group to determine if we need to do anything.
+dat_tax_sampling_effort <- dat_simple_tax %>% left_join(sampling_effort)
 
 ################################################################
 # -- 3. aggregate and standardize repeated observations at the same location
@@ -110,7 +168,7 @@ itis_taxa_match <- read_from_google_drive(file_name_string = 'itis_taxa_match',
                        col_types = cols(.default = 'c'),
                        keep_local_copy_of_file = FALSE)
 
-dat_all <- merge(dat_all, itis_taxa_match[,c("target_tax","acceptedname","acceptedrank")], by = "target_tax")
+dat_all <- merge(dat_all, itis_taxa_match[,c("target_tax","acceptedname","acceptedtsn","acceptedrank")], by = "target_tax")
 
 
 ####################
@@ -136,11 +194,7 @@ fu <- function(x){
   return(dis_tax)
 }
 
-
-#kept all site and site visits separate may want to change
-dat_all$splitID <- paste0(dat_all$SiteNumber, "-", dat_all$SiteVisitSampleNumber)
-distinct_site_taxa <- split(dat_all, factor(dat_all$splitID))
-
+distinct_site_taxa <- split(dat_all, factor(dat_all$SiteNumber))
 distinct_site_taxa <- lapply(distinct_site_taxa, function(x) fu(x))
 distinct_site_taxa <- do.call(rbind, distinct_site_taxa)
 
@@ -148,7 +202,9 @@ distinct_site_taxa <- do.call(rbind, distinct_site_taxa)
 # -- 5. filter out rare taxa
 ##########################################
 
-dat_all <- distinct_site_taxa
+dat_all <- distinct_site_taxa %>% 
+  left_join(sampling_effort)
+
 
 # make a table of taxon occurrence rates by observation variable "SitevisitSampleNumber"
 taxon_occurrence_rates <- distinct_site_taxa %>% 
@@ -164,9 +220,10 @@ singleton_species_list <- taxon_occurrence_rates %>%
   filter(total_occurrence_in_data_set == 1)
 
 dat_no_singletons <- distinct_site_taxa %>%
-  filter(!acceptedname %in% singleton_species_list$acceptedname)
+  filter(!acceptedname %in% singleton_species_list$acceptedname) %>% 
+  left_join(sampling_effort)
 
-
+names(dat_no_singletons)
 ################################################################
 # -- Write out data
 ##########################################
