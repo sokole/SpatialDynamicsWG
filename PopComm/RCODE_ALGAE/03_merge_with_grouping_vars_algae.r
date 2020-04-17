@@ -39,9 +39,9 @@ taxon_drive_id <- pop_comm_list_of_files %>% filter(name == taxon_group) %>%
 # get grouping file
 
 dat_groups <- read_from_google_drive(file_name_string = '(?i)network_roots_',
-                       my_path_to_googledirve_directory = taxon_drive_id,
-                       keep_local_copy_of_file = FALSE,
-                       col_types = cols(.default = 'c')) %>%
+                                     my_path_to_googledirve_directory = taxon_drive_id,
+                                     keep_local_copy_of_file = FALSE,
+                                     col_types = cols(.default = 'c')) %>%
   mutate(SITE_ID = SITE_ID %>% as.numeric() %>% as.character())
 
 
@@ -49,9 +49,9 @@ dat_groups <- read_from_google_drive(file_name_string = '(?i)network_roots_',
 # get taxon occurrence file
 
 dat_tax_occ <- read_from_google_drive(file_name_string = '(?i)TAXA_OCCURRENCES_by_site.*singletonsremoved',
-                                     my_path_to_googledirve_directory = taxon_drive_id,
-                                     keep_local_copy_of_file = FALSE,
-                                     col_types = cols(.default = 'c'))  %>%
+                                      my_path_to_googledirve_directory = taxon_drive_id,
+                                      keep_local_copy_of_file = FALSE,
+                                      col_types = cols(.default = 'c'))  %>%
   rename(SITE_ID = SiteNumber) %>%
   mutate(SITE_ID = SITE_ID %>% as.numeric() %>% as.character()) 
 
@@ -76,7 +76,7 @@ dat_tax_groups <- dat_tax_occ %>%
   inner_join(dat_groups) 
 
 dat_tax_groups_simple <- dat_tax_groups %>%
-  select(taxa_group, SITE_ID, site_COMID, root_COMID, vpu, CLEAN_ITIS_TSN, CLEAN_taxon_name, CLEAN_taxon_rank, 
+  select(taxa_group, SITE_ID, site_COMID, root_COMID, vpu, CLEAN_taxon_name, CLEAN_taxon_rank, 
          N_samples, N_collect_dates, N_collect_years,
          huc_dir_name, huc_dir_googleid) %>%
   distinct()
@@ -87,4 +87,3 @@ write_to_google_drive(data_to_write = dat_tax_groups_simple,
                       write_filename = paste0('TAXA_OCCURRENCES_by_site_grouped_',taxon_group,'.csv'),
                       my_path_to_googledirve_directory = taxon_drive_id,
                       keep_local_copy_of_file = FALSE)
-
